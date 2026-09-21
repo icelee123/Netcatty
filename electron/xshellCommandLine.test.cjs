@@ -22,6 +22,7 @@ test("parseXshellCommandLine accepts -url with OTP-style passwords and -newtab m
     username: "root",
     password: "OTP:0pBCzWslgRIR",
     port: 22,
+    tabName: "root@192.168.1.122",
   });
   assert.deepEqual(Array.from(consumedIndices ?? []), [1, 2, 3, 4]);
 });

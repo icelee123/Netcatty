@@ -88,8 +88,75 @@ test("collectSshDeepLinkQueueItems keeps Xshell -url launches when scheme URLs a
       ssh: [{
         rawUrl: "ssh://root:OTP%3A0pBCzWslgRIR@192.168.1.122:22",
         viaCommandLine: true,
+        tabName: "root@192.168.1.122",
       }],
       telnet: [],
+    },
+  );
+});
+
+test("collectSshDeepLinkQueueItems preserves tolerated PuTTY-style -newtab names", () => {
+  assert.deepEqual(
+    collectSshDeepLinkQueueItems([
+      "Netcatty.exe",
+      "-newtab",
+      "Production",
+      "-ssh",
+      "root@192.168.1.122",
+      "-P",
+      "22",
+    ], { includeSchemeUrls: false }),
+    {
+      ssh: [{
+        rawUrl: "ssh://root@192.168.1.122:22",
+        viaCommandLine: true,
+        tabName: "Production",
+      }],
+      telnet: [],
+    },
+  );
+});
+
+test("collectSshDeepLinkQueueItems preserves SecureCRT /N names", () => {
+  assert.deepEqual(
+    collectSshDeepLinkQueueItems([
+      "Netcatty.exe",
+      "/SSH2",
+      "/L",
+      "root",
+      "/P",
+      "22",
+      "/N",
+      "Production",
+      "192.168.1.122",
+    ], { includeSchemeUrls: false }),
+    {
+      ssh: [{
+        rawUrl: "ssh://root@192.168.1.122:22",
+        viaCommandLine: true,
+        tabName: "Production",
+      }],
+      telnet: [],
+    },
+  );
+});
+
+test("collectSshDeepLinkQueueItems preserves Xshell telnet tab names", () => {
+  assert.deepEqual(
+    collectSshDeepLinkQueueItems([
+      "Netcatty.exe",
+      "-url",
+      "telnet://192.168.1.122:23",
+      "-newtab",
+      "Router",
+    ], { includeSchemeUrls: false }),
+    {
+      ssh: [],
+      telnet: [{
+        rawUrl: "telnet://192.168.1.122:23",
+        viaCommandLine: true,
+        tabName: "Router",
+      }],
     },
   );
 });

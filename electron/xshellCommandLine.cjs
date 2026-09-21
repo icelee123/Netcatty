@@ -67,6 +67,7 @@ function parseXshellCommandLine(argv, { valueOperandIndices } = {}) {
   const operandIndices = findValueOperandIndices(argv, valueOperandIndices);
   const consumedIndices = new Set();
   let target;
+  let tabName;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -88,6 +89,7 @@ function parseXshellCommandLine(argv, { valueOperandIndices } = {}) {
     if (arg === "-newtab") {
       consumedIndices.add(index);
       if (typeof argv[index + 1] === "string") {
+        tabName = argv[index + 1].trim();
         consumedIndices.add(index + 1);
         index += 1;
       }
@@ -97,7 +99,7 @@ function parseXshellCommandLine(argv, { valueOperandIndices } = {}) {
     if (arg.startsWith("-")) return null;
   }
 
-  return target ? { ...target, consumedIndices } : null;
+  return target ? { ...target, ...(tabName ? { tabName } : {}), consumedIndices } : null;
 }
 
 function redactXshellCommandLinePasswords(argv) {
