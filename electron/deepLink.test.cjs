@@ -68,10 +68,49 @@ test("collectPuttyStyleDeepLinkUrls leaves ssh:// tokens to the existing collect
       "Netcatty.exe",
       "-url",
       "ssh://alice@example.com",
-      "-ssh",
-      "ignored@host",
+      "-newtab",
+      "alice@example.com",
     ]),
-    { ssh: [], telnet: [] },
+    { ssh: ["ssh://alice@example.com"], telnet: [] },
+  );
+});
+
+test("collectSshDeepLinkQueueItems keeps Xshell -url launches when scheme URLs are disabled", () => {
+  assert.deepEqual(
+    collectSshDeepLinkQueueItems([
+      "Netcatty.exe",
+      "-url",
+      "ssh://root:OTP:0pBCzWslgRIR@192.168.1.122:22",
+      "-newtab",
+      "root@192.168.1.122",
+    ], { includeSchemeUrls: false }),
+    {
+      ssh: [{
+        rawUrl: "ssh://root:OTP%3A0pBCzWslgRIR@192.168.1.122:22",
+        viaCommandLine: true,
+      }],
+      telnet: [],
+    },
+  );
+});
+
+test("collectSshDeepLinkQueueItems keeps genuine scheme URLs when -url is a PuTTY password value", () => {
+  assert.deepEqual(
+    collectSshDeepLinkQueueItems([
+      "Netcatty.exe",
+      "-ssh",
+      "-pw",
+      "-url",
+      "ssh://root:secret@host",
+    ]),
+    { ssh: [{ rawUrl: "ssh://root:secret@host", viaCommandLine: false }], telnet: [] },
+  );
+});
+
+test("collectJmsDeepLinkUrls keeps -url values with unsupported Xshell schemes", () => {
+  assert.deepEqual(
+    collectJmsDeepLinkUrls(["Netcatty.exe", "-url", "jms://payload"]),
+    ["jms://payload"],
   );
 });
 
@@ -673,6 +712,12 @@ for (const password of ["/SSH2", "/TELNET", "/PASSWORD", "/PASSPHRASE"]) {
 test("flag-shaped SecureCRT passwords do not consume genuine scheme links", () => {
   assert.deepEqual(collectSshDeepLinkQueueItems([
     "Netcatty.exe", "/SSH2", "/PASSWORD", "/L", "ssh://bob@example.com",
+  ]), { ssh: [{ rawUrl: "ssh://bob@example.com", viaCommandLine: false }], telnet: [] });
+});
+
+test("SecureCRT passwords shaped like Xshell -url do not become Xshell launches", () => {
+  assert.deepEqual(collectSshDeepLinkQueueItems([
+    "Netcatty.exe", "/SSH2", "/PASSWORD", "-url", "ssh://bob@example.com",
   ]), { ssh: [{ rawUrl: "ssh://bob@example.com", viaCommandLine: false }], telnet: [] });
 });
 

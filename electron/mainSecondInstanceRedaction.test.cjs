@@ -69,6 +69,35 @@ test("legacy second instances without additional data retain ordered-argv suppor
   assert.equal(eventArgv.includes("secret"), false);
 });
 
+test("Xshell -url launches queue and clear embedded passwords after transport cleanup", () => {
+  const h = createHarness();
+  const args = [
+    "-url",
+    "ssh://root:OTP:0pBCzWslgRIR@192.168.1.122:22",
+    "-newtab",
+    "root@192.168.1.122",
+  ];
+  const argv = ["netcatty", ...args];
+  const data = { rawLaunchArgv: [...args] };
+  h.handle(null, argv, "/working-directory", data);
+  assert.deepEqual(h.queued, ["ssh://root:OTP%3A0pBCzWslgRIR@192.168.1.122:22"]);
+  assert.equal(argv.some((arg) => arg.includes("0pBCzWslgRIR")), false);
+  assert.equal(data.rawLaunchArgv.length, 0);
+});
+
+test("mixed flag-shaped argv clears Xshell URL passwords before marker redaction", () => {
+  const h = createHarness();
+  const argv = [
+    "netcatty",
+    "/SSH2",
+    "/PASSWORD",
+    "-url",
+    "ssh://root:secret@host",
+  ];
+  h.handle(null, argv, "/working-directory");
+  assert.equal(argv.some((arg) => arg.includes("secret")), false);
+});
+
 test("Explorer launch routing uses the ordered copy after transport cleanup", () => {
   const h = createHarness();
   const ordered = ["--open-terminal-path", "relative-folder"];

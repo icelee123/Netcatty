@@ -8,6 +8,7 @@ const {
   collectSshDeepLinkQueueItems,
   redactPuttyCommandLinePasswords,
   redactSecureCrtCommandLinePasswords,
+  redactXshellCommandLinePasswords,
 } = require("./deepLink.cjs");
 
 test("second instance forwards its raw argv through the single-instance lock", () => {
@@ -99,6 +100,7 @@ for (const gotLock of [true, false]) {
       process: { argv },
       redactPuttyCommandLinePasswords,
       redactSecureCrtCommandLinePasswords,
+      redactXshellCommandLinePasswords,
       app: {
         requestSingleInstanceLock(data) {
           // Electron serializes additionalData synchronously in this call.

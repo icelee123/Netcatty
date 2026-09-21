@@ -77,6 +77,7 @@ const {
   getSshDeepLinkRendererReadyTimeoutMs,
   redactPuttyCommandLinePasswords,
   redactSecureCrtCommandLinePasswords,
+  redactXshellCommandLinePasswords,
   isJmsDeepLinkUrl,
   isSshDeepLinkUrl,
   isTelnetDeepLinkUrl,
@@ -706,7 +707,9 @@ const pendingTelnetDeepLinkUrls = [...initialDeepLinkQueueItems.telnet];
 // redacted copy would make warm PuTTY-style launches authenticate with the
 // masked password.
 const rawLaunchArgvForHandoff = [...process.argv];
-// SecureCRT operands may contain PuTTY switch names; scrub them first.
+// Xshell URLs must be scrubbed before SecureCRT/PuTTY redaction can replace a
+// literal `-url` password operand and hide the URL marker.
+redactXshellCommandLinePasswords(process.argv);
 redactSecureCrtCommandLinePasswords(process.argv);
 redactPuttyCommandLinePasswords(process.argv);
 const pendingOpenTerminalPaths = resolveOpenTerminalPathsFromArgs(process.argv);
@@ -1246,6 +1249,7 @@ if (!gotLock) {
     const deepLinkQueueItems = collectSshDeepLinkQueueItems(secondInstanceArgv, {
       includeSchemeUrls: sshDeepLinkEnabled,
     });
+    redactXshellCommandLinePasswords(secondInstanceArgv);
     redactSecureCrtCommandLinePasswords(secondInstanceArgv);
     redactPuttyCommandLinePasswords(secondInstanceArgv);
     if (rawLaunchArgv) {

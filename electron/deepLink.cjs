@@ -5,6 +5,10 @@ const {
   redactPuttyCommandLinePasswords,
 } = require("./puttyCommandLine.cjs");
 const {
+  parseXshellCommandLine,
+  redactXshellCommandLinePasswords,
+} = require("./xshellCommandLine.cjs");
+const {
   parseSecureCrtCommandLineTokens,
   redactSecureCrtCommandLinePasswords,
 } = require("./secureCrtCommandLine.cjs");
@@ -28,10 +32,22 @@ function isDeepLinkUrl(rawUrl, protocol) {
 function collectSchemeUrlCandidates(argv) {
   if (!Array.isArray(argv)) return [];
   const tokens = parseSecureCrtCommandLineTokens(argv);
-  if (!tokens) return argv;
   const filterIndices = new Set();
-  if (tokens.operandIndices instanceof Set) {
+  if (tokens?.operandIndices instanceof Set) {
     for (const index of tokens.operandIndices) filterIndices.add(index);
+  }
+
+  const xshell = parseXshellCommandLine(argv, {
+    valueOperandIndices: tokens?.operandIndices,
+  });
+  if (xshell?.consumedIndices instanceof Set) {
+    for (const index of xshell.consumedIndices) filterIndices.add(index);
+  }
+
+  if (!tokens) {
+    return filterIndices.size > 0
+      ? argv.filter((_, index) => !filterIndices.has(index))
+      : argv;
   }
   if (tokens.result && tokens.consumedIndices instanceof Set) {
     for (const index of tokens.consumedIndices) filterIndices.add(index);
@@ -69,6 +85,16 @@ function collectJmsDeepLinkUrls(argv) {
 }
 
 function collectPuttyStyleDeepLinkUrls(argv) {
+  const secureCrt = parseSecureCrtCommandLineTokens(argv);
+  const xshell = parseXshellCommandLine(argv, {
+    valueOperandIndices: secureCrt?.operandIndices,
+  });
+  if (xshell?.url) {
+    return xshell.protocol === TELNET_PROTOCOL
+      ? { ssh: [], telnet: [xshell.url] }
+      : { ssh: [xshell.url], telnet: [] };
+  }
+
   if (
     collectSshDeepLinkUrls(argv).length > 0
     || collectTelnetDeepLinkUrls(argv).length > 0
@@ -81,7 +107,6 @@ function collectPuttyStyleDeepLinkUrls(argv) {
   // tried first: bastion/4A launchers configured as "SecureCRT" emit them, and
   // the flag sets are disjoint from PuTTY-style dashes, so trying SecureCRT
   // first then falling back to PuTTY covers both callers (#3390, #3044).
-  const secureCrt = parseSecureCrtCommandLineTokens(argv);
   const parsed = secureCrt ? secureCrt.result : parsePuttyCommandLine(argv);
   if (!parsed?.url) return { ssh: [], telnet: [] };
   if (parsed.protocol === TELNET_PROTOCOL) {
@@ -467,6 +492,7 @@ module.exports = {
   collectTelnetDeepLinkUrls,
   redactPuttyCommandLinePasswords,
   redactSecureCrtCommandLinePasswords,
+  redactXshellCommandLinePasswords,
   isJmsDeepLinkUrl,
   isSshDeepLinkUrl,
   isTelnetDeepLinkUrl,
