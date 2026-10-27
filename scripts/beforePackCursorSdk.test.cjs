@@ -46,6 +46,21 @@ test("ensureCursorSdkPlatformPackages installs both macOS Cursor runtime package
   assert.equal(calls[0][2].cwd, tempDir);
 });
 
+test("ensureCursorSdkPlatformPackages skips unsupported Linux Loong64 Cursor runtimes", () => {
+  const calls = [];
+
+  const installed = ensureCursorSdkPlatformPackages({
+    projectDir: process.cwd(),
+    platform: "linux",
+    arch: 4,
+    run: (...args) => calls.push(args),
+    logger: { log() {}, warn() {} },
+  });
+
+  assert.deepEqual(installed, []);
+  assert.deepEqual(calls, []);
+});
+
 test("ensureCursorSdkPlatformPackages is a no-op when target packages exist", (t) => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "netcatty-cursor-pack-"));
   t.after(() => fs.rmSync(tempDir, { recursive: true, force: true }));

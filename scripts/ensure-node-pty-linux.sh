@@ -3,7 +3,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <prepare|verify> <x64|arm64>" >&2
+  echo "Usage: $0 <prepare|verify> <x64|arm64|loong64>" >&2
   exit 1
 }
 
@@ -75,11 +75,16 @@ prepare() {
   local serialport_root="node_modules/@serialport/bindings-cpp"
   local serialport_release_dir="${serialport_root}/build/Release"
   local serialport_prebuild
+  local rebuild_flags=(--force --arch "${arch}")
+
+  if [[ "${arch}" == "loong64" ]]; then
+    rebuild_flags+=(--build-from-source)
+  fi
 
   echo "[node-pty] rebuilding native modules for Electron on linux-${arch}"
   log_electron_runtime_info
   rm -rf "${release_dir}" "${prebuild_dir}" "${serialport_release_dir}"
-  npx electron-rebuild --force --arch "${arch}" -w "node-pty,@serialport/bindings-cpp"
+  npx electron-rebuild "${rebuild_flags[@]}" -w "node-pty,@serialport/bindings-cpp"
 
   test -f "${release_dir}/pty.node"
   test -f "${serialport_release_dir}/bindings.node"
@@ -101,10 +106,14 @@ prepare() {
   log_file_info "${prebuild_dir}/pty.node"
   log_optional_spawn_helper "${prebuild_dir}/spawn-helper"
 
-  serialport_prebuild="$(resolve_serialport_prebuild "${serialport_root}" "${arch}")"
-  echo "[node-pty] serialport packaged prebuild candidate:"
-  log_file_info "${serialport_prebuild}"
-  assert_loadable_native_module "${serialport_prebuild}"
+  if [[ "${arch}" != "loong64" ]]; then
+    serialport_prebuild="$(resolve_serialport_prebuild "${serialport_root}" "${arch}")"
+    echo "[node-pty] serialport packaged prebuild candidate:"
+    log_file_info "${serialport_prebuild}"
+    assert_loadable_native_module "${serialport_prebuild}"
+  else
+    echo "[node-pty] serialport prebuild is unavailable for linux-loong64; using source build."
+  fi
 }
 
 verify() {
@@ -136,9 +145,11 @@ verify() {
     exit 1
   fi
 
-  if [[ -z "${serialport_prebuild_file}" ]]; then
-    echo "[node-pty] packaged serialport glibc prebuild not found for linux-${arch} under release/" >&2
-    exit 1
+  if [[ "${arch}" != "loong64" ]]; then
+    if [[ -z "${serialport_prebuild_file}" ]]; then
+      echo "[node-pty] packaged serialport glibc prebuild not found for linux-${arch} under release/" >&2
+      exit 1
+    fi
   fi
 
   test -f "${release_dir}/pty.node"
@@ -158,9 +169,13 @@ verify() {
   log_file_info "${serialport_release_file}"
   assert_loadable_native_module "${serialport_release_file}"
 
-  echo "[node-pty] packaged serialport prebuild artifact:"
-  log_file_info "${serialport_prebuild_file}"
-  assert_loadable_native_module "${serialport_prebuild_file}"
+  if [[ "${arch}" != "loong64" ]]; then
+    echo "[node-pty] packaged serialport prebuild artifact:"
+    log_file_info "${serialport_prebuild_file}"
+    assert_loadable_native_module "${serialport_prebuild_file}"
+  else
+    echo "[node-pty] serialport prebuild verification skipped for linux-loong64; source build is packaged."
+  fi
 
   echo "[node-pty] packaged artifact locations:"
   find release -path "*/resources/app.asar.unpacked/node_modules/node-pty/*" \

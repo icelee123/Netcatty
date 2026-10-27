@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const { createRequire } = require("node:module");
 
 test("electron-builder classifies Fetch API 5xx responses as retryable", async () => {
-  const modulePath = require.resolve("app-builder-lib/out/util/electronGet.js");
+  const modulePath = require.resolve("@loongdotjs/app-builder-lib/out/util/electronGet.js");
   const localRequire = createRequire(modulePath);
   const runtime = localRequire("builder-util-runtime");
   const retryDescriptor = Object.getOwnPropertyDescriptor(runtime, "retry");

@@ -11,7 +11,7 @@ const buildWorkflow = readWorkflow("build.yml");
 const aiWorkflow = readWorkflow("ai-automation.yml");
 const etWorkflow = readWorkflow("build-et-binaries.yml");
 const appBuilderPatch = fs.readFileSync(
-  path.join(__dirname, "..", "patches", "app-builder-lib+26.15.2.patch"),
+  path.join(__dirname, "..", "patches", "@loongdotjs+app-builder-lib+26.15.6.patch"),
   "utf8",
 );
 const windowsEtBuild = fs.readFileSync(

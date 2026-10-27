@@ -301,7 +301,7 @@ test("pruneCursorSdkPlatformPackages keeps both macOS packages for universal bui
 
   const removed = pruneCursorSdkPlatformPackages({
     electronPlatformName: "darwin",
-    arch: 4,
+    arch: 5,
     appOutDir: tempDir,
     packager: { appInfo: { productFilename: "Netcatty" } },
   });
@@ -309,6 +309,34 @@ test("pruneCursorSdkPlatformPackages keeps both macOS packages for universal bui
   assert.deepEqual(removed, []);
   assert.ok(fs.existsSync(path.join(cursorRoot, "sdk-darwin-arm64")));
   assert.ok(fs.existsSync(path.join(cursorRoot, "sdk-darwin-x64")));
+});
+
+test("pruneCursorSdkPlatformPackages removes unsupported Linux Loong64 packages", (t) => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const path = require("node:path");
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "netcatty-prune-cursor-"));
+  t.after(() => fs.rmSync(tempDir, { recursive: true, force: true }));
+  const cursorRoot = path.join(
+    tempDir,
+    "resources",
+    "app.asar.unpacked",
+    "node_modules",
+    "@cursor",
+  );
+  fs.mkdirSync(path.join(cursorRoot, "sdk-linux-arm64"), { recursive: true });
+  fs.mkdirSync(path.join(cursorRoot, "sdk-linux-x64"), { recursive: true });
+
+  const removed = pruneCursorSdkPlatformPackages({
+    electronPlatformName: "linux",
+    arch: 4,
+    appOutDir: tempDir,
+    packager: { appInfo: { productFilename: "netcatty" } },
+  });
+
+  assert.deepEqual(removed, ["sdk-linux-arm64", "sdk-linux-x64"]);
+  assert.ok(!fs.existsSync(path.join(cursorRoot, "sdk-linux-arm64")));
+  assert.ok(!fs.existsSync(path.join(cursorRoot, "sdk-linux-x64")));
 });
 
 test("pruneCursorSdkPlatformPackages keeps only the target Linux arch package", (t) => {

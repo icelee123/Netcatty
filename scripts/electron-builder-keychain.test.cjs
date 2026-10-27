@@ -6,7 +6,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 test('macOS signing separates temporary keychain and certificate passwords', async () => {
-  const modulePath = require.resolve('app-builder-lib/out/codeSign/macCodeSign.js');
+  const modulePath = require.resolve('@loongdotjs/app-builder-lib/out/codeSign/macCodeSign.js');
   const localRequire = createRequire(modulePath);
   const calls = [];
   const sandbox = {
@@ -14,7 +14,7 @@ test('macOS signing separates temporary keychain and certificate passwords', asy
     __dirname: path.dirname(modulePath),
     process: { env: { TRAVIS: 'true' } },
     require(id) {
-      if (id === 'builder-util') return {
+      if (id === '@loongdotjs/builder-util') return {
         exec: async (file, args) => { assert.equal(file, '/usr/bin/security'); calls.push(args); return ''; },
       };
       if (id === './codesign') return { importCertificate: async (file) => file };

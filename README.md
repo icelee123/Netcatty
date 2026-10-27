@@ -204,7 +204,7 @@ Download the latest release for your platform from [GitHub Releases](https://git
 | :--- | :--- |
 | **macOS** | Universal (x64 / arm64) |
 | **Windows** | x64 / arm64 |
-| **Linux** | x64 / arm64 |
+| **Linux** | x64 / arm64 / loong64 (experimental) |
 
 Or browse all releases at [GitHub Releases](https://github.com/binaricat/Netcatty/releases).
 
@@ -257,8 +257,9 @@ nix run github:binaricat/Netcatty
 For declarative installs, add the Netcatty flake as an input and use `inputs.netcatty.packages.${pkgs.system}.default` in your NixOS or Home Manager package list.
 
 ### Prerequisites
-- Node.js 18+ and npm
+- Node.js 22+ and npm
 - macOS, Windows 10+, or Linux
+- LoongArch64 requires a New World LoongArch system with glibc 2.38 or newer
 
 ### Development
 
@@ -290,7 +291,31 @@ npm run pack
 npm run pack:mac     # macOS (DMG + ZIP)
 npm run pack:win     # Windows (NSIS installer)
 npm run pack:linux   # Linux (AppImage + DEB + RPM)
+npm run pack:linux-loong64   # Linux LoongArch64 (experimental)
 ```
+
+### LoongArch64 (experimental)
+
+Netcatty can build on LoongArch64 using the community Electron port from
+[darkyzhou/electron-loong64](https://github.com/darkyzhou/electron-loong64) and
+`@loongdotjs/electron-builder`.
+
+On a native `linux-loong64` host:
+
+Install Node.js 22+, Python 3, and a C/C++ build toolchain before running the
+commands below; `node-pty` and `serialport` compile from source on Loong64.
+
+```bash
+npm run setup:loong64
+npm run pack:linux-loong64
+```
+
+The setup script installs Electron 42.3.0 from the LoongArch release mirror and
+uses the Loong64-aware electron-builder fork. The initial artifact is a
+`linux-loong64` tarball; AppImage and system package targets need additional
+Loong64 packaging tools. Bundled Mosh and EternalTerminal clients are not yet
+published for LoongArch64; those features are skipped until native binaries are
+added.
 
 ---
 
@@ -299,7 +324,7 @@ npm run pack:linux   # Linux (AppImage + DEB + RPM)
 
 | Category | Technology |
 |----------|------------|
-| Framework | Electron 40 |
+| Framework | Electron 42.3.0 |
 | Frontend | React 19, TypeScript |
 | Build Tool | Vite 7 |
 | Terminal | xterm.js 5 |

@@ -1,5 +1,8 @@
 const { moshExtraResources } = require('./scripts/mosh-extra-resources.cjs');
 const { etExtraResources } = require('./scripts/et-extra-resources.cjs');
+const process = require('node:process');
+const requestedArch = process.env.npm_config_arch || process.env.npm_config_target_arch || process.arch;
+const isLoong64Build = requestedArch === 'loong64';
 
 /**
  * @type {import('electron-builder').Configuration}
@@ -41,6 +44,12 @@ module.exports = {
     //     making the app icon look smaller than other apps in taskbar /
     //     Start menu / desktop shortcuts.
     icon: 'public/icon.png',
+    ...(isLoong64Build ? {
+        electronDownload: {
+            mirror: 'https://github.com/darkyzhou/electron-loong64/releases/download/',
+            customDir: 'v42.3.0',
+        },
+    } : {}),
     // npmRebuild must stay enabled for macOS and Windows builds — without it,
     // node-pty's native module is not recompiled for the Electron ABI, causing
     // "posix_spawnp failed" on macOS. Linux builds set npm_config_arch in CI
@@ -286,7 +295,7 @@ module.exports = {
         // installs only hicolor/1024x1024 and launchers miss the icon (#274,
         // #1340). Do NOT set linux.icon to a single 1024px PNG either.
         icon: 'icons',
-        target: ['AppImage', 'deb', 'rpm', 'pacman'],
+        target: isLoong64Build ? ['tar.gz'] : ['AppImage', 'deb', 'rpm', 'pacman'],
         category: 'Development',
         extraResources: [...moshExtraResources('linux'), ...etExtraResources('linux')]
     },

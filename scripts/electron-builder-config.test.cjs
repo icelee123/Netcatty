@@ -1,5 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const { readFileSync } = require("node:fs");
 const path = require("node:path");
 
@@ -236,7 +237,7 @@ test("linux packaging uses multi-size build/icons instead of a single 1024px ove
     assert.ok(fs.existsSync(file), `expected Linux icon: build/icons/${size}x${size}.png`);
   }
 
-  const { convertIcon } = require("app-builder-lib/out/util/iconConverter");
+  const { convertIcon } = require("@loongdotjs/app-builder-lib/out/util/iconConverter");
   const projectDir = path.join(__dirname, "..");
   const buildResources = path.join(projectDir, config.directories.buildResources);
   const sources = [config.linux.icon, config.mac?.icon ?? config.icon].filter(Boolean);
@@ -252,6 +253,36 @@ test("linux packaging uses multi-size build/icons instead of a single 1024px ove
     sizes.includes(48) && sizes.includes(256) && !sizes.every((size) => size === 1024),
     `expected standard hicolor sizes, got: ${sizes.join(", ")}`,
   );
+});
+
+test("loong64 packaging downloads Electron from the community release mirror", () => {
+  const result = spawnSync(
+    process.execPath,
+    ["-e", "console.log(JSON.stringify(require('./electron-builder.config.cjs').electronDownload))"],
+    {
+      cwd: path.join(__dirname, ".."),
+      env: { ...process.env, npm_config_arch: "loong64" },
+      encoding: "utf8",
+    },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), {
+    mirror: "https://github.com/darkyzhou/electron-loong64/releases/download/",
+    customDir: "v42.3.0",
+  });
+
+  const targetResult = spawnSync(
+    process.execPath,
+    ["-e", "console.log(JSON.stringify(require('./electron-builder.config.cjs').linux.target))"],
+    {
+      cwd: path.join(__dirname, ".."),
+      env: { ...process.env, npm_config_arch: "loong64" },
+      encoding: "utf8",
+    },
+  );
+  assert.equal(targetResult.status, 0, targetResult.stderr);
+  assert.deepEqual(JSON.parse(targetResult.stdout), ["tar.gz"]);
 });
 
 test("linux packaging includes an Arch Linux pacman package target", () => {
@@ -329,9 +360,9 @@ test("windows installer registers and removes Explorer folder context menu entri
 });
 
 test("windows zip follows the requested build architecture", () => {
-  const { Arch } = require("builder-util");
-  const { Platform } = require("app-builder-lib");
-  const { computeArchToTargetNamesMap } = require("app-builder-lib/out/targets/targetFactory");
+  const { Arch } = require("@loongdotjs/builder-util");
+  const { Platform } = require("@loongdotjs/app-builder-lib");
+  const { computeArchToTargetNamesMap } = require("@loongdotjs/app-builder-lib/out/targets/targetFactory");
 
   const rawCliTargets = new Map([[Arch.x64, []]]);
   const targetsByArch = computeArchToTargetNamesMap(

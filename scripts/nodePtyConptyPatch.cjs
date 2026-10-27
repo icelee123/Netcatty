@@ -7,7 +7,8 @@ const ELECTRON_BUILDER_ARCH = {
   1: "x64",
   2: "armv7l",
   3: "arm64",
-  4: "universal",
+  4: "loong64",
+  5: "universal",
 };
 
 function nodePtyArtifacts(projectDir) {

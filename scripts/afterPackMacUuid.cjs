@@ -132,7 +132,8 @@ const ELECTRON_BUILDER_ARCH_NAMES = {
   1: "x64",
   2: "armv7l",
   3: "arm64",
-  4: "universal",
+  4: "loong64",
+  5: "universal",
 };
 
 function archNameFromContext(context) {
@@ -263,7 +264,6 @@ function pruneCursorSdkPlatformPackages(context) {
   if (candidates.length === 0) return [];
 
   const keep = cursorPackagesToKeep(platform, archNameFromContext(context));
-  if (keep.size === 0) return [];
 
   const cursorRoot = path.join(
     appResourcesDir(context),

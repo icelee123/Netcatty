@@ -41,10 +41,12 @@ function npmExecutable() {
 function ensureCursorSdkPlatformPackages({
   projectDir,
   platform,
+  arch,
   run = execFileSync,
   logger = console,
 }) {
   const packages = CURSOR_PLATFORM_PACKAGES[platform] || [];
+  if (platform === "linux" && (arch === "loong64" || arch === 4 || arch === "4")) return [];
   if (packages.length === 0) return [];
 
   const version = getCursorSdkVersion(projectDir);
@@ -73,7 +75,7 @@ function beforePackCursorSdk(context = {}) {
   const platform = context.electronPlatformName || process.platform;
   const arch = normalizeWindowsHelperArch(context.arch || process.env.npm_config_arch || process.arch);
   const ensureCursor = context.ensureCursorSdkPlatformPackages || ensureCursorSdkPlatformPackages;
-  ensureCursor({ projectDir, platform });
+  ensureCursor({ projectDir, platform, arch: context.arch || process.env.npm_config_arch || process.arch });
   const buildHelper = context.buildWindowsHelloHelper || buildWindowsHelloHelper;
   if (platform === "win32") {
     const result = buildHelper({ projectDir, platform, arch });
